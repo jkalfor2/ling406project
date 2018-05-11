@@ -1,9 +1,17 @@
 import nltk
 import glob
+import math
+
+stopwords = ["a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", "were", "will", "with"]
 
 def clean_text(the_text):
+    global stopwords
     tokens = nltk.word_tokenize(the_text)
-    return tokens
+    meaningful_tokens = []
+    for token in tokens:
+        if token not in stopwords:
+            meaningful_tokens.append(token)
+    return meaningful_tokens
 
 def get_bigrams(the_text):
     bigrams = nltk.bigrams(the_text)
@@ -57,3 +65,32 @@ def train_classifier(path, valence):
                     pos_bigrams[gram] = 1
 
         f.close()
+
+def classify(filename):
+    neg_score = 0
+    pos_score = 0
+
+    f = open(filename)
+    review = f.read()
+    tokens = clean_text(review)
+    grams = get_bigrams(tokens)
+
+    for gram in grams:
+        if gram in neg_bigrams.keys():
+            neg_score += math.log(neg_bigrams[gram])/math.log(neg_wdct)
+        if gram in pos_bigrams.keys():
+            pos_score += math.log(pos_bigrams[gram])/math.log(pos_wdct)
+        else:
+            word = gram[1]
+            if word in neg_unigrams.keys():
+                neg_score += neg_unigrams[word]/(neg_wdct)
+            if word in pos_unigrams.keys():
+                pos_score += pos_unigrams[word]/(pos_wdct)
+
+#    pos_score /= pos_wdct
+#    neg_score /= neg_wdct
+#    print(pos_score, "\t", neg_score)
+    if pos_score > neg_score:
+        return("Positive")
+    else:
+        return("Negative")
